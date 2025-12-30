@@ -70,9 +70,9 @@ void ASpatialPartitioningHashGridActor::CheckPartitioning()
 	ActiveHashIDList.Reserve(1 + DynamicActors.Num());
 
 	const FName CurPlayerAreaHashID = GetAreaHashID(PlayerChar->GetActorLocation());
-	if (PlayerAreaHashID.IsNone())
+	if (PlayerAreaHashID.CenterHashGridID.IsNone())
 	{
-		PlayerAreaHashID = CurPlayerAreaHashID;
+		PlayerAreaHashID.CenterHashGridID = CurPlayerAreaHashID;
 	}
 
 	ActiveHashIDList.Add(CurPlayerAreaHashID);
@@ -80,29 +80,31 @@ void ASpatialPartitioningHashGridActor::CheckPartitioning()
 	for (FSpatialDynamicActor& ActorData : DynamicActors)
 	{
 		const FName CurHashID = GetAreaHashID(ActorData.Actor->GetActorLocation());
-		if (ActorData.AreaHashID.IsNone())
+		if (ActorData.AreaHashID.CenterHashGridID.IsNone())
 		{
-			ActorData.AreaHashID = CurHashID;
+			ActorData.AreaHashID.CenterHashGridID = CurHashID;
 		}
 		ActiveHashIDList.Add(CurHashID);
 	}
 
 	//만약 현재 HashID와 이미 저장된 HashID가 다르다면, 이미 저장된 HashID는 FailHashIDList에 넣음
 	TSet<FName> DeactiveHashIDList;
-	if (PlayerAreaHashID.IsEqual(CurPlayerAreaHashID) == false)
+	if (PlayerAreaHashID.CenterHashGridID.IsEqual(CurPlayerAreaHashID) == false)
 	{
-		DeactiveHashIDList.Add(PlayerAreaHashID);
+		DeactiveHashIDList.Add(PlayerAreaHashID.CenterHashGridID);
 
-		PlayerAreaHashID = CurPlayerAreaHashID;
+		PlayerAreaHashID.CenterHashGridID = CurPlayerAreaHashID;
 	}
 
 	for (FSpatialDynamicActor& ActorData : DynamicActors)
 	{
 		const FName CurHashID = GetAreaHashID(ActorData.Actor->GetActorLocation());
-		if (ActorData.AreaHashID.IsEqual(CurHashID) == false)
+
+		FHashGridIDSet& AreaHashID = ActorData.AreaHashID;
+		if (AreaHashID.CenterHashGridID.IsEqual(CurHashID) == false)
 		{
-			DeactiveHashIDList.Add(ActorData.AreaHashID);
-			ActorData.AreaHashID = CurHashID;
+			DeactiveHashIDList.Add(AreaHashID.CenterHashGridID);
+			AreaHashID.CenterHashGridID = CurHashID;
 		}
 	}
 
@@ -164,6 +166,6 @@ void ASpatialPartitioningHashGridActor::RegisterDynamicActors(AActor* InActor)
 {
 	FSpatialDynamicActor SPActor;
 	SPActor.Actor = InActor;
-	SPActor.AreaHashID = GetAreaHashID(InActor->GetActorLocation());
+	SPActor.AreaHashID.CenterHashGridID = GetAreaHashID(InActor->GetActorLocation());
 	DynamicActors.Add(SPActor);
 }

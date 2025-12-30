@@ -10,6 +10,20 @@
  * 
  */
 USTRUCT()
+struct FHashGridIDSet
+{
+	GENERATED_BODY()
+public:
+	FHashGridIDSet()
+	{
+		CenterHashGridID = FName();
+		NeighbourHashGridIDList.Reserve(8);
+	}
+	FName CenterHashGridID;
+	TSet<FName> NeighbourHashGridIDList;
+};
+
+USTRUCT()
 struct FSpatialElement
 {
 	GENERATED_BODY()
@@ -35,7 +49,7 @@ struct FSpatialDynamicActor
 	GENERATED_BODY()
 public:
 	TWeakObjectPtr<AActor> Actor;
-	FName AreaHashID;
+	FHashGridIDSet AreaHashID;
 };
 
 UCLASS()
@@ -59,6 +73,5 @@ protected:
 
 	TArray<FSpatialDynamicActor> DynamicActors; // 동적 오브젝트들이 있다면, 이 동적 오브젝트들이 있는 위치의 Hash Grid 관련 Component들 또한 활성화 필요
 
-	FName PlayerAreaHashID = FName();
-
+	FHashGridIDSet PlayerAreaHashID;
 };
