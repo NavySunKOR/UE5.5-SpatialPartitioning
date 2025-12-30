@@ -57,7 +57,7 @@ void ASpatialPartitioningHashGridActor::InitStaticMeshComponents()
 	}
 }
 
-void ASpatialPartitioningHashGridActor::CheckPartitioning()
+void ASpatialPartitioningHashGridActor::UpdatePartitioningState()
 {
 	if (PlayerChar.Get() == nullptr)
 	{
@@ -66,16 +66,22 @@ void ASpatialPartitioningHashGridActor::CheckPartitioning()
 
 	//Active는 활성화, Fail은 비활성화
 	//현재 있는 액터들의 ActiveHashIDList들을 수집함
+	//Need to optimize.... (If Center grid is same as prev, then don't add to ActiveHashIDList)
 	TSet<FName> ActiveHashIDList;
-	ActiveHashIDList.Reserve(1 + DynamicActors.Num());
+	ActiveHashIDList.Reserve(9 + DynamicActors.Num() * 9);
 
 	const FName CurPlayerAreaHashID = GetAreaHashID(PlayerChar->GetActorLocation());
 	if (PlayerAreaHashID.CenterHashGridID.IsNone())
 	{
 		PlayerAreaHashID.CenterHashGridID = CurPlayerAreaHashID;
+		PlayerAreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(PlayerAreaHashID.CenterHashGridID);
 	}
 
 	ActiveHashIDList.Add(CurPlayerAreaHashID);
+	for (const FName& HashGridID : PlayerAreaHashID.NeighbourHashGridIDList)
+	{
+		ActiveHashIDList.Add(HashGridID);
+	}
 
 	for (FSpatialDynamicActor& ActorData : DynamicActors)
 	{
@@ -83,17 +89,29 @@ void ASpatialPartitioningHashGridActor::CheckPartitioning()
 		if (ActorData.AreaHashID.CenterHashGridID.IsNone())
 		{
 			ActorData.AreaHashID.CenterHashGridID = CurHashID;
+			ActorData.AreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(ActorData.AreaHashID.CenterHashGridID);
 		}
+
 		ActiveHashIDList.Add(CurHashID);
+		for (const FName& HashGridID : ActorData.AreaHashID.NeighbourHashGridIDList)
+		{
+			ActiveHashIDList.Add(HashGridID);
+		}
 	}
 
 	//만약 현재 HashID와 이미 저장된 HashID가 다르다면, 이미 저장된 HashID는 FailHashIDList에 넣음
+	//Need to optimize.... (If Center grid is same as prev, then don't add to DeactiveHashIDList)
 	TSet<FName> DeactiveHashIDList;
 	if (PlayerAreaHashID.CenterHashGridID.IsEqual(CurPlayerAreaHashID) == false)
 	{
 		DeactiveHashIDList.Add(PlayerAreaHashID.CenterHashGridID);
+		for (const FName& HashGridID : PlayerAreaHashID.NeighbourHashGridIDList)
+		{
+			DeactiveHashIDList.Add(HashGridID);
+		}
 
 		PlayerAreaHashID.CenterHashGridID = CurPlayerAreaHashID;
+		PlayerAreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(PlayerAreaHashID.CenterHashGridID);
 	}
 
 	for (FSpatialDynamicActor& ActorData : DynamicActors)
@@ -104,7 +122,13 @@ void ASpatialPartitioningHashGridActor::CheckPartitioning()
 		if (AreaHashID.CenterHashGridID.IsEqual(CurHashID) == false)
 		{
 			DeactiveHashIDList.Add(AreaHashID.CenterHashGridID);
+			for (const FName& HashGridID : AreaHashID.NeighbourHashGridIDList)
+			{
+				DeactiveHashIDList.Add(HashGridID);
+			}
+
 			AreaHashID.CenterHashGridID = CurHashID;
+			AreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(AreaHashID.CenterHashGridID);
 		}
 	}
 
@@ -131,11 +155,50 @@ FName ASpatialPartitioningHashGridActor::GetAreaHashID(const FVector& InLocation
 
 	FString HashID = FString();
 	HashID.Append(FString::FromInt(DivX));
-	HashID.Append(".");
+	HashID.Append(",");
 	HashID.Append(FString::FromInt(DivY));
 
 	FName name(HashID);
 	return name;
+}
+
+TSet<FName> ASpatialPartitioningHashGridActor::GetNeighbourAreaHashIDList(FName InCenterHash) const
+{
+	TArray<FString> Parser;
+	InCenterHash.ToString().ParseIntoArray(Parser, TEXT(","));
+	int32 DivX = FCString::Atoi(*Parser[0]);
+	int32 DivY = FCString::Atoi(*Parser[1]);
+
+	TSet<FName> NeighbourList;
+	NeighbourList.Reserve(8);
+
+	{
+		TArray<TPair<int32, int32>> NeighbourDivList;
+		NeighbourDivList.Reserve(8);
+		NeighbourDivList.Add(TPair<int32,int32>(DivX,DivY+1)); //Up
+		NeighbourDivList.Add(TPair<int32, int32>(DivX - 1, DivY + 1)); // LeftUp
+		NeighbourDivList.Add(TPair<int32, int32>(DivX-1, DivY)); //Left
+		NeighbourDivList.Add(TPair<int32, int32>(DivX - 1, DivY - 1)); //LeftDown
+		NeighbourDivList.Add(TPair<int32, int32>(DivX, DivY - 1)); //Down
+		NeighbourDivList.Add(TPair<int32, int32>(DivX + 1, DivY - 1)); //RightDown
+		NeighbourDivList.Add(TPair<int32, int32>(DivX + 1, DivY)); //Right
+		NeighbourDivList.Add(TPair<int32, int32>(DivX + 1, DivY + 1)); //RightUp
+
+		for (TPair<int32,int32> NeighBour : NeighbourDivList)
+		{
+			if ((NeighBour.Key >= 0 && NeighBour.Key <= GridCountX) &&
+				(NeighBour.Value >= 0 && NeighBour.Value <= GridCountY))
+			{
+				FString HashID = FString();
+				HashID.Append(FString::FromInt(NeighBour.Key));
+				HashID.Append(",");
+				HashID.Append(FString::FromInt(NeighBour.Value));
+				NeighbourList.Add(FName(HashID));
+			}
+		}
+	}
+	
+	return NeighbourList;
 }
 
 void ASpatialPartitioningHashGridActor::UpdateAreaStaticMeshComponents(const FName& InAreaID, const bool bCollisionEnable)

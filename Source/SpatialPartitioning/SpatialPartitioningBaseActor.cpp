@@ -29,7 +29,7 @@ void ASpatialPartitioningBaseActor::BeginPlay()
 void ASpatialPartitioningBaseActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	CheckPartitioning();
+	UpdatePartitioningState();
 }
 
 void ASpatialPartitioningBaseActor::SetBoundsAlignActor()

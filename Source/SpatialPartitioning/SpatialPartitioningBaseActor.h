@@ -20,7 +20,7 @@ protected:
 
 	//Removed SkeletalMeshes because they can move.
 	virtual void InitStaticMeshComponents() PURE_VIRTUAL(ASpatialPartitioningBaseActor::InitStaticMeshComponents,);
-	virtual void CheckPartitioning() PURE_VIRTUAL(ASpatialPartitioningBaseActor::CheckPartitioning, );
+	virtual void UpdatePartitioningState() PURE_VIRTUAL(ASpatialPartitioningBaseActor::UpdatePartitioningState, );
 
 public:	
 	// Called every frame

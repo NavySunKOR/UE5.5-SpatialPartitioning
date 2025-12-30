@@ -59,8 +59,9 @@ class SPATIALPARTITIONING_API ASpatialPartitioningHashGridActor : public ASpatia
 	
 protected:
 	virtual void InitStaticMeshComponents() override;
-	virtual void CheckPartitioning() override;
+	virtual void UpdatePartitioningState() override;
 	FName GetAreaHashID(const FVector& InLocation) const;
+	TSet<FName> GetNeighbourAreaHashIDList(FName InCenterHash) const;
 
 	void UpdateAreaStaticMeshComponents(const FName& InAreaID, const bool bCollisionEnable);
 
