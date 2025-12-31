@@ -31,28 +31,70 @@ void ASpatialPartitioningHashGridActor::InitStaticMeshComponents()
 			{
 				continue;
 			}
-			const FName areaID = GetAreaHashID(Comp->GetComponentLocation());
 
-			if (StaticMeshHashData.Contains(areaID) == false)
+			const FBox Border = Comp->Bounds.GetBox();
+			const FVector BorderCenter = Border.GetCenter();
+			const FVector BorderExtent = Border.GetExtent();
+
+			TSet<FName> HashIDList;
+
+			FIntPoint LeftUp = GetAreaHashIDIntPoint(FVector(BorderCenter.X - BorderExtent.X, BorderCenter.Y - BorderExtent.Y, 0));
+			HashIDList.Add(MakeAreaHashID(LeftUp));
+
+			FIntPoint LeftDown = GetAreaHashIDIntPoint(FVector(BorderCenter.X - BorderExtent.X, BorderCenter.Y + BorderExtent.Y, 0));
+			HashIDList.Add(MakeAreaHashID(LeftDown));
+
+			FIntPoint RightUp = GetAreaHashIDIntPoint(FVector(BorderCenter.X + BorderExtent.X, BorderCenter.Y - BorderExtent.Y, 0));
+			HashIDList.Add(MakeAreaHashID(RightUp));
+
+			FIntPoint RightDown = GetAreaHashIDIntPoint(FVector(BorderCenter.X + BorderExtent.X, BorderCenter.Y + BorderExtent.Y, 0));
+			HashIDList.Add(MakeAreaHashID(RightDown));
+
+			FIntPoint Diff;
+			Diff.X = FMath::Abs(RightUp.X - LeftUp.X);
+			Diff.Y = FMath::Abs(LeftDown.Y - LeftUp.Y);
+
+			for (int32 i = 1; i < Diff.X; ++i)
 			{
-				StaticMeshHashData.Add(areaID, FSpatialData());
+				FIntPoint UpSides = LeftUp + FIntPoint(i, 0);
+				HashIDList.Add(MakeAreaHashID(UpSides));
+
+				FIntPoint DownSides = LeftDown + FIntPoint(i, 0);
+				HashIDList.Add(MakeAreaHashID(DownSides));
 			}
 
-			const ECollisionEnabled::Type CollisionType = Comp->GetCollisionEnabled();
-			if (Comp->GetCollisionEnabled() == ECollisionEnabled::NoCollision)
+			for (int32 i = 1; i < Diff.Y; ++i)
 			{
-				continue;
+				FIntPoint LeftSides = LeftUp + FIntPoint(0, i);
+				HashIDList.Add(MakeAreaHashID(LeftSides));
+
+				FIntPoint RightSides = RightUp + FIntPoint(0, i);
+				HashIDList.Add(MakeAreaHashID(RightSides));
 			}
 
-			FSpatialElement pair;
-			pair.bSimulatePhysics = Comp->IsSimulatingPhysics();
-			pair.StaticMeshComponent = Comp;
-			pair.CollisionEnabledType = CollisionType;
+			for (const FName& HashAreaID : HashIDList)
+			{
+				if (StaticMeshHashData.Contains(HashAreaID) == false)
+				{
+					StaticMeshHashData.Add(HashAreaID, FSpatialData());
+				}
 
-			pair.StaticMeshComponent->SetSimulatePhysics(false);
-			pair.StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+				const ECollisionEnabled::Type CollisionType = Comp->GetCollisionEnabled();
+				if (Comp->GetCollisionEnabled() == ECollisionEnabled::NoCollision)
+				{
+					continue;
+				}
 
-			StaticMeshHashData[areaID].StaticMeshHashData.Add(pair);
+				FSpatialElement pair;
+				pair.bSimulatePhysics = Comp->IsSimulatingPhysics();
+				pair.StaticMeshComponent = Comp;
+				pair.CollisionEnabledType = CollisionType;
+
+				StaticMeshHashData[HashAreaID].StaticMeshHashData.Add(pair);
+			}
+
+			Comp->SetSimulatePhysics(false);
+			Comp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}
 }
@@ -146,19 +188,27 @@ void ASpatialPartitioningHashGridActor::UpdatePartitioningState()
 
 FName ASpatialPartitioningHashGridActor::GetAreaHashID(const FVector& InLocation) const
 {
+	FIntPoint Div = GetAreaHashIDIntPoint(InLocation);
+	return MakeAreaHashID(Div);
+}
+
+FIntPoint ASpatialPartitioningHashGridActor::GetAreaHashIDIntPoint(const FVector& InLocation) const
+{
 	int32 IntLocX = (int32)InLocation.X;
 	int32 IntLocY = (int32)InLocation.Y;
 
-	int32 DivX = (int32)(IntLocX / GridWidth);
-	int32 DivY = (int32)(IntLocY / GridHeight);
+	FIntPoint Div = FIntPoint((int32)(IntLocX / GridWidth), (int32)(IntLocY / GridHeight));
+	return Div;
+}
 
+FName ASpatialPartitioningHashGridActor::MakeAreaHashID(const FIntPoint& InAreaHashPoint) const
+{
 	FString HashID = FString();
-	HashID.Append(FString::FromInt(DivX));
+	HashID.Append(FString::FromInt(InAreaHashPoint.X));
 	HashID.Append(",");
-	HashID.Append(FString::FromInt(DivY));
+	HashID.Append(FString::FromInt(InAreaHashPoint.Y));
 
-	FName name(HashID);
-	return name;
+	return FName(HashID);
 }
 
 TSet<FName> ASpatialPartitioningHashGridActor::GetNeighbourAreaHashIDList(FName InCenterHash) const

@@ -61,6 +61,8 @@ protected:
 	virtual void InitStaticMeshComponents() override;
 	virtual void UpdatePartitioningState() override;
 	FName GetAreaHashID(const FVector& InLocation) const;
+	FIntPoint GetAreaHashIDIntPoint(const FVector& InLocation) const;
+	FName MakeAreaHashID(const FIntPoint& InAreaHashPoint) const;
 	TSet<FName> GetNeighbourAreaHashIDList(FName InCenterHash) const;
 
 	void UpdateAreaStaticMeshComponents(const FName& InAreaID, const bool bCollisionEnable);
