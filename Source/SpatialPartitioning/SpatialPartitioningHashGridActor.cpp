@@ -66,69 +66,70 @@ void ASpatialPartitioningHashGridActor::UpdatePartitioningState()
 
 	//Active는 활성화, Fail은 비활성화
 	//현재 있는 액터들의 ActiveHashIDList들을 수집함
+	// 
 	//Need to optimize.... (If Center grid is same as prev, then don't add to ActiveHashIDList)
 	TSet<FName> ActiveHashIDList;
+	TSet<FName> DeactiveHashIDList;
 	ActiveHashIDList.Reserve(9 + DynamicActors.Num() * 9);
 
 	const FName CurPlayerAreaHashID = GetAreaHashID(PlayerChar->GetActorLocation());
-	if (PlayerAreaHashID.CenterHashGridID.IsNone())
-	{
-		PlayerAreaHashID.CenterHashGridID = CurPlayerAreaHashID;
-		PlayerAreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(PlayerAreaHashID.CenterHashGridID);
-	}
 
-	ActiveHashIDList.Add(CurPlayerAreaHashID);
-	for (const FName& HashGridID : PlayerAreaHashID.NeighbourHashGridIDList)
+	if (PlayerAreaHashID.CenterHashGridID.IsEqual(CurPlayerAreaHashID) == false)
 	{
-		ActiveHashIDList.Add(HashGridID);
-	}
-
-	for (FSpatialDynamicActor& ActorData : DynamicActors)
-	{
-		const FName CurHashID = GetAreaHashID(ActorData.Actor->GetActorLocation());
-		if (ActorData.AreaHashID.CenterHashGridID.IsNone())
+		if (PlayerAreaHashID.CenterHashGridID.IsNone())
 		{
-			ActorData.AreaHashID.CenterHashGridID = CurHashID;
-			ActorData.AreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(ActorData.AreaHashID.CenterHashGridID);
+			PlayerAreaHashID.CenterHashGridID = CurPlayerAreaHashID;
+			PlayerAreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(PlayerAreaHashID.CenterHashGridID);
+		}
+		else
+		{
+			//이전에 있던 항목들은 전부 Deactive함.
+			DeactiveHashIDList.Add(PlayerAreaHashID.CenterHashGridID);
+			for (const FName& HashGridID : PlayerAreaHashID.NeighbourHashGridIDList)
+			{
+				DeactiveHashIDList.Add(HashGridID);
+			}
 		}
 
-		ActiveHashIDList.Add(CurHashID);
-		for (const FName& HashGridID : ActorData.AreaHashID.NeighbourHashGridIDList)
+		PlayerAreaHashID.CenterHashGridID = CurPlayerAreaHashID;
+		PlayerAreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(PlayerAreaHashID.CenterHashGridID);
+
+		ActiveHashIDList.Add(PlayerAreaHashID.CenterHashGridID);
+		for (const FName& HashGridID : PlayerAreaHashID.NeighbourHashGridIDList)
 		{
 			ActiveHashIDList.Add(HashGridID);
 		}
 	}
 
-	//만약 현재 HashID와 이미 저장된 HashID가 다르다면, 이미 저장된 HashID는 FailHashIDList에 넣음
-	//Need to optimize.... (If Center grid is same as prev, then don't add to DeactiveHashIDList)
-	TSet<FName> DeactiveHashIDList;
-	if (PlayerAreaHashID.CenterHashGridID.IsEqual(CurPlayerAreaHashID) == false)
-	{
-		DeactiveHashIDList.Add(PlayerAreaHashID.CenterHashGridID);
-		for (const FName& HashGridID : PlayerAreaHashID.NeighbourHashGridIDList)
-		{
-			DeactiveHashIDList.Add(HashGridID);
-		}
-
-		PlayerAreaHashID.CenterHashGridID = CurPlayerAreaHashID;
-		PlayerAreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(PlayerAreaHashID.CenterHashGridID);
-	}
 
 	for (FSpatialDynamicActor& ActorData : DynamicActors)
 	{
-		const FName CurHashID = GetAreaHashID(ActorData.Actor->GetActorLocation());
-
 		FHashGridIDSet& AreaHashID = ActorData.AreaHashID;
+		const FName CurHashID = GetAreaHashID(ActorData.Actor->GetActorLocation());
 		if (AreaHashID.CenterHashGridID.IsEqual(CurHashID) == false)
 		{
-			DeactiveHashIDList.Add(AreaHashID.CenterHashGridID);
-			for (const FName& HashGridID : AreaHashID.NeighbourHashGridIDList)
+			if (ActorData.AreaHashID.CenterHashGridID.IsNone())
 			{
-				DeactiveHashIDList.Add(HashGridID);
+				ActorData.AreaHashID.CenterHashGridID = CurHashID;
+				ActorData.AreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(ActorData.AreaHashID.CenterHashGridID);
+			}
+			else
+			{
+				DeactiveHashIDList.Add(AreaHashID.CenterHashGridID);
+				for (const FName& HashGridID : AreaHashID.NeighbourHashGridIDList)
+				{
+					DeactiveHashIDList.Add(HashGridID);
+				}
 			}
 
 			AreaHashID.CenterHashGridID = CurHashID;
 			AreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(AreaHashID.CenterHashGridID);
+
+			ActiveHashIDList.Add(AreaHashID.CenterHashGridID);
+			for (const FName& HashGridID : ActorData.AreaHashID.NeighbourHashGridIDList)
+			{
+				ActiveHashIDList.Add(HashGridID);
+			}
 		}
 	}
 
