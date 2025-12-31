@@ -66,14 +66,12 @@ void ASpatialPartitioningHashGridActor::UpdatePartitioningState()
 
 	//Active는 활성화, Fail은 비활성화
 	//현재 있는 액터들의 ActiveHashIDList들을 수집함
-	// 
-	//Need to optimize.... (If Center grid is same as prev, then don't add to ActiveHashIDList)
 	TSet<FName> ActiveHashIDList;
 	TSet<FName> DeactiveHashIDList;
 	ActiveHashIDList.Reserve(9 + DynamicActors.Num() * 9);
 
+	//Player 처리
 	const FName CurPlayerAreaHashID = GetAreaHashID(PlayerChar->GetActorLocation());
-
 	if (PlayerAreaHashID.CenterHashGridID.IsEqual(CurPlayerAreaHashID) == false)
 	{
 		if (PlayerAreaHashID.CenterHashGridID.IsNone())
@@ -101,7 +99,7 @@ void ASpatialPartitioningHashGridActor::UpdatePartitioningState()
 		}
 	}
 
-
+	//DynamicActors 처리
 	for (FSpatialDynamicActor& ActorData : DynamicActors)
 	{
 		FHashGridIDSet& AreaHashID = ActorData.AreaHashID;
@@ -269,5 +267,6 @@ void ASpatialPartitioningHashGridActor::RegisterDynamicActors(AActor* InActor)
 	FSpatialDynamicActor SPActor;
 	SPActor.Actor = InActor;
 	SPActor.AreaHashID.CenterHashGridID = GetAreaHashID(InActor->GetActorLocation());
+	SPActor.AreaHashID.NeighbourHashGridIDList = GetNeighbourAreaHashIDList(SPActor.AreaHashID.CenterHashGridID);
 	DynamicActors.Add(SPActor);
 }
