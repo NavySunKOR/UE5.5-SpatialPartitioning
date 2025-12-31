@@ -65,12 +65,24 @@ protected:
 
 	void UpdateAreaStaticMeshComponents(const FName& InAreaID, const bool bCollisionEnable);
 
+	void DrawDebugObjects();
+
+	virtual void Tick(float DeltaTime) override;
+
 public:
 	void RegisterDynamicActors(AActor* InActor);
 
 protected:
 	UPROPERTY(VisibleAnywhere,Transient)
 	TMap<FName, FSpatialData> StaticMeshHashData; //TMap<AreaHashID,component>
+
+	UPROPERTY(EditAnywhere)
+	bool bDebug = true;
+
+	UPROPERTY(EditAnywhere)
+	float DebugShowInterval = 1.f;
+
+	float DebugShowTimer = 0.f;
 
 	TArray<FSpatialDynamicActor> DynamicActors; // 동적 오브젝트들이 있다면, 이 동적 오브젝트들이 있는 위치의 Hash Grid 관련 Component들 또한 활성화 필요
 

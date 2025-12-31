@@ -170,7 +170,7 @@ TSet<FName> ASpatialPartitioningHashGridActor::GetNeighbourAreaHashIDList(FName 
 	int32 DivY = FCString::Atoi(*Parser[1]);
 
 	TSet<FName> NeighbourList;
-	NeighbourList.Reserve(8);
+	//NeighbourList.Reserve(8);
 
 	{
 		TArray<TPair<int32, int32>> NeighbourDivList;
@@ -221,6 +221,44 @@ void ASpatialPartitioningHashGridActor::UpdateAreaStaticMeshComponents(const FNa
 		{
 			Elem.StaticMeshComponent->SetSimulatePhysics(false);
 			Elem.StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+}
+
+void ASpatialPartitioningHashGridActor::DrawDebugObjects()
+{
+	for (const TPair<FName,FSpatialData>& Pair : StaticMeshHashData)
+	{
+		for (const FSpatialElement& Elem : Pair.Value.StaticMeshHashData)
+		{
+			const bool bCollisionEnabled = Elem.StaticMeshComponent->IsCollisionEnabled();
+			const FBox Box = Elem.StaticMeshComponent->Bounds.GetBox();
+			DrawDebugBox(GetWorld(), Box.GetCenter(), Box.GetExtent(), (bCollisionEnabled) ? FColor::Blue : FColor::Red,false,DebugShowInterval);
+		}
+	}
+
+	//Grids
+	for (int32 x = 0 ; x < GridCountX ; ++x)
+	{
+		for (int32 y = 0; y < GridCountY; ++y)
+		{
+			const FVector GridCenter = FVector(x * GridWidth + GridWidth / 2.f, y * GridHeight + GridHeight / 2.f, 0);
+			const FVector GridExtent = FVector(GridWidth / 2.f,GridHeight / 2.f, 100.f);
+			DrawDebugBox(GetWorld(), GridCenter, GridExtent, FColor::Green, false, DebugShowInterval);
+		}
+	}
+}
+
+void ASpatialPartitioningHashGridActor::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	if (bDebug)
+	{
+		DebugShowTimer += DeltaTime;
+		if (DebugShowTimer > DebugShowInterval)
+		{
+			DrawDebugObjects();
+			DebugShowTimer = 0;
 		}
 	}
 }
