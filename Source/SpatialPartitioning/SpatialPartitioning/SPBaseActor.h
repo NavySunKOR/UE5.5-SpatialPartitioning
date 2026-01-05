@@ -4,23 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "SpatialPartitioningBaseActor.generated.h"
+#include "SPBaseActor.generated.h"
 
 UCLASS(Abstract)
-class SPATIALPARTITIONING_API ASpatialPartitioningBaseActor : public AActor
+class SPATIALPARTITIONING_API ASPBaseActor : public AActor
 {
 	GENERATED_BODY()
 public:	
 	// Sets default values for this actor's properties
-	ASpatialPartitioningBaseActor();
+	ASPBaseActor();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	//Removed SkeletalMeshes because they can move.
-	virtual void InitStaticMeshComponents() PURE_VIRTUAL(ASpatialPartitioningBaseActor::InitStaticMeshComponents,);
-	virtual void UpdatePartitioningState() PURE_VIRTUAL(ASpatialPartitioningBaseActor::UpdatePartitioningState, );
+	virtual void InitStaticMeshComponents() PURE_VIRTUAL(ASPBaseActor::InitStaticMeshComponents,);
+	virtual void UpdatePartitioningState() PURE_VIRTUAL(ASPBaseActor::UpdatePartitioningState, );
 
 public:	
 	// Called every frame

@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SpatialPartitioningBaseActor.h"
+#include "SPBaseActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Character.h"
 
 // Sets default values
-ASpatialPartitioningBaseActor::ASpatialPartitioningBaseActor()
+ASPBaseActor::ASPBaseActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -17,7 +17,7 @@ ASpatialPartitioningBaseActor::ASpatialPartitioningBaseActor()
 }
 
 // Called when the game starts or when spawned
-void ASpatialPartitioningBaseActor::BeginPlay()
+void ASPBaseActor::BeginPlay()
 {
 	Super::BeginPlay();
 	PlayerChar = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
@@ -26,13 +26,13 @@ void ASpatialPartitioningBaseActor::BeginPlay()
 }
 
 // Called every frame
-void ASpatialPartitioningBaseActor::Tick(float DeltaTime)
+void ASPBaseActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	UpdatePartitioningState();
 }
 
-void ASpatialPartitioningBaseActor::SetBoundsAlignActor()
+void ASPBaseActor::SetBoundsAlignActor()
 {
 	if (BoundSetActor == nullptr)
 	{
@@ -44,7 +44,7 @@ void ASpatialPartitioningBaseActor::SetBoundsAlignActor()
 	BoundSetActor->GetActorBounds(false,Center,Extent);
 }
 
-void ASpatialPartitioningBaseActor::InitGridData()
+void ASPBaseActor::InitGridData()
 {
 	StartPos = Center;
 	StartPos.X -= Extent.X;

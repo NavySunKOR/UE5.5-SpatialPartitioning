@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SpatialPartitioningHashGridActor.h"
+#include "SPHashGridActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 
@@ -9,7 +9,7 @@
 //모든 물체가 안 움직인다는(Static) 전제 하에 아래의 로직들이 처리됨
 #define EXCLUDE_FROM_SPATIAL_PARTITIONING FName("ExcludeSP")
 
-void ASpatialPartitioningHashGridActor::InitStaticMeshComponents()
+void ASPHashGridActor::InitStaticMeshComponents()
 {
 	TArray<AActor*> Actors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), Actors);
@@ -99,7 +99,7 @@ void ASpatialPartitioningHashGridActor::InitStaticMeshComponents()
 	}
 }
 
-void ASpatialPartitioningHashGridActor::UpdatePartitioningState()
+void ASPHashGridActor::UpdatePartitioningState()
 {
 	if (PlayerChar.Get() == nullptr)
 	{
@@ -186,13 +186,13 @@ void ASpatialPartitioningHashGridActor::UpdatePartitioningState()
 	}
 }
 
-FName ASpatialPartitioningHashGridActor::GetAreaHashID(const FVector& InLocation) const
+FName ASPHashGridActor::GetAreaHashID(const FVector& InLocation) const
 {
 	FIntPoint Div = GetAreaHashIDIntPoint(InLocation);
 	return MakeAreaHashID(Div);
 }
 
-FIntPoint ASpatialPartitioningHashGridActor::GetAreaHashIDIntPoint(const FVector& InLocation) const
+FIntPoint ASPHashGridActor::GetAreaHashIDIntPoint(const FVector& InLocation) const
 {
 	int32 IntLocX = (int32)InLocation.X;
 	int32 IntLocY = (int32)InLocation.Y;
@@ -201,7 +201,7 @@ FIntPoint ASpatialPartitioningHashGridActor::GetAreaHashIDIntPoint(const FVector
 	return Div;
 }
 
-FName ASpatialPartitioningHashGridActor::MakeAreaHashID(const FIntPoint& InAreaHashPoint) const
+FName ASPHashGridActor::MakeAreaHashID(const FIntPoint& InAreaHashPoint) const
 {
 	FString HashID = FString();
 	HashID.Append(FString::FromInt(InAreaHashPoint.X));
@@ -211,7 +211,7 @@ FName ASpatialPartitioningHashGridActor::MakeAreaHashID(const FIntPoint& InAreaH
 	return FName(HashID);
 }
 
-TSet<FName> ASpatialPartitioningHashGridActor::GetNeighbourAreaHashIDList(FName InCenterHash) const
+TSet<FName> ASPHashGridActor::GetNeighbourAreaHashIDList(FName InCenterHash) const
 {
 	TArray<FString> Parser;
 	InCenterHash.ToString().ParseIntoArray(Parser, TEXT(","));
@@ -250,7 +250,7 @@ TSet<FName> ASpatialPartitioningHashGridActor::GetNeighbourAreaHashIDList(FName 
 	return NeighbourList;
 }
 
-void ASpatialPartitioningHashGridActor::UpdateAreaStaticMeshComponents(const FName& InAreaID, const bool bCollisionEnable)
+void ASPHashGridActor::UpdateAreaStaticMeshComponents(const FName& InAreaID, const bool bCollisionEnable)
 {
 	if (StaticMeshHashData.Contains(InAreaID) == false)
 	{
@@ -274,7 +274,7 @@ void ASpatialPartitioningHashGridActor::UpdateAreaStaticMeshComponents(const FNa
 	}
 }
 
-void ASpatialPartitioningHashGridActor::DrawDebugObjects()
+void ASPHashGridActor::DrawDebugObjects()
 {
 	for (const TPair<FName,FSpatialData>& Pair : StaticMeshHashData)
 	{
@@ -298,7 +298,7 @@ void ASpatialPartitioningHashGridActor::DrawDebugObjects()
 	}
 }
 
-void ASpatialPartitioningHashGridActor::Tick(float DeltaTime)
+void ASPHashGridActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	if (bDebug)
@@ -312,7 +312,7 @@ void ASpatialPartitioningHashGridActor::Tick(float DeltaTime)
 	}
 }
 
-void ASpatialPartitioningHashGridActor::RegisterDynamicActors(AActor* InActor)
+void ASPHashGridActor::RegisterDynamicActors(AActor* InActor)
 {
 	FSpatialDynamicActor SPActor;
 	SPActor.Actor = InActor;

@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "SpatialPartitioningBaseActor.h"
-#include "SpatialPartitioningHashGridActor.generated.h"
+#include "SPBaseActor.h"
+#include "SPHashGridActor.generated.h"
 
 /**
  * 
@@ -53,7 +53,7 @@ public:
 };
 
 UCLASS()
-class SPATIALPARTITIONING_API ASpatialPartitioningHashGridActor : public ASpatialPartitioningBaseActor
+class SPATIALPARTITIONING_API ASPHashGridActor : public ASPBaseActor
 {
 	GENERATED_BODY()
 	
