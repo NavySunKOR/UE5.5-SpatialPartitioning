@@ -57,19 +57,22 @@ class SPATIALPARTITIONING_API ASPHashGridActor : public ASPBaseActor
 {
 	GENERATED_BODY()
 	
+public:
+	ASPHashGridActor();
+
 protected:
+	void InitGridData();
+	virtual void InitProperties() override;
 	virtual void InitStaticMeshComponents() override;
 	virtual void UpdatePartitioningState() override;
+	virtual void DrawDebugObjects() override;
+
+	void UpdateAreaStaticMeshComponents(const FName& InAreaID, const bool bCollisionEnable);
+
 	FName GetAreaHashID(const FVector& InLocation) const;
 	FIntPoint GetAreaHashIDIntPoint(const FVector& InLocation) const;
 	FName MakeAreaHashID(const FIntPoint& InAreaHashPoint) const;
 	TSet<FName> GetNeighbourAreaHashIDList(FName InCenterHash) const;
-
-	void UpdateAreaStaticMeshComponents(const FName& InAreaID, const bool bCollisionEnable);
-
-	void DrawDebugObjects();
-
-	virtual void Tick(float DeltaTime) override;
 
 public:
 	void RegisterDynamicActors(AActor* InActor);
@@ -79,12 +82,10 @@ protected:
 	TMap<FName, FSpatialData> StaticMeshHashData; //TMap<AreaHashID,component>
 
 	UPROPERTY(EditAnywhere)
-	bool bDebug = true;
+	int32 GridCountX;
 
 	UPROPERTY(EditAnywhere)
-	float DebugShowInterval = 1.f;
-
-	float DebugShowTimer = 0.f;
+	int32 GridCountY;
 
 	TArray<FSpatialDynamicActor> DynamicActors; // 동적 오브젝트들이 있다면, 이 동적 오브젝트들이 있는 위치의 Hash Grid 관련 Component들 또한 활성화 필요
 

@@ -7,7 +7,29 @@
 
 //Include보다는 Exclude가 더 빠를 것으로 예상하여 Exclude로 처리
 //모든 물체가 안 움직인다는(Static) 전제 하에 아래의 로직들이 처리됨
-#define EXCLUDE_FROM_SPATIAL_PARTITIONING FName("ExcludeSP")
+
+ASPHashGridActor::ASPHashGridActor()
+{
+	GridCountX = 5;
+	GridCountY = 5;
+}
+
+void ASPHashGridActor::InitGridData()
+{
+	StartPos = Center;
+	StartPos.X -= Extent.X;
+	StartPos.Y -= Extent.Y;
+
+	const FVector FullExtent = Extent * 2.f;
+
+	GridWidth = uint32(FullExtent.X / GridCountX);
+	GridHeight = uint32(FullExtent.Y / GridCountY);
+}
+
+void ASPHashGridActor::InitProperties()
+{
+	InitGridData();
+}
 
 void ASPHashGridActor::InitStaticMeshComponents()
 {
@@ -186,6 +208,56 @@ void ASPHashGridActor::UpdatePartitioningState()
 	}
 }
 
+
+void ASPHashGridActor::DrawDebugObjects()
+{
+	for (const TPair<FName, FSpatialData>& Pair : StaticMeshHashData)
+	{
+		for (const FSpatialElement& Elem : Pair.Value.StaticMeshHashData)
+		{
+			const bool bCollisionEnabled = Elem.StaticMeshComponent->IsCollisionEnabled();
+			const FBox Box = Elem.StaticMeshComponent->Bounds.GetBox();
+			DrawDebugBox(GetWorld(), Box.GetCenter(), Box.GetExtent(), (bCollisionEnabled) ? FColor::Blue : FColor::Red, false, DebugShowInterval);
+		}
+	}
+
+	//Grids
+	for (int32 x = 0; x < GridCountX; ++x)
+	{
+		for (int32 y = 0; y < GridCountY; ++y)
+		{
+			const FVector GridCenter = FVector(x * GridWidth + GridWidth / 2.f, y * GridHeight + GridHeight / 2.f, 0);
+			const FVector GridExtent = FVector(GridWidth / 2.f, GridHeight / 2.f, 100.f);
+			DrawDebugBox(GetWorld(), GridCenter, GridExtent, FColor::Green, false, DebugShowInterval);
+		}
+	}
+}
+
+
+void ASPHashGridActor::UpdateAreaStaticMeshComponents(const FName& InAreaID, const bool bCollisionEnable)
+{
+	if (StaticMeshHashData.Contains(InAreaID) == false)
+	{
+		return;
+	}
+
+	TArray<FSpatialElement>& Elements = StaticMeshHashData[InAreaID].StaticMeshHashData;
+
+	for (FSpatialElement& Elem : Elements)
+	{
+		if (bCollisionEnable)
+		{
+			Elem.StaticMeshComponent->SetCollisionEnabled(Elem.CollisionEnabledType);
+			Elem.StaticMeshComponent->SetSimulatePhysics(Elem.bSimulatePhysics);
+		}
+		else
+		{
+			Elem.StaticMeshComponent->SetSimulatePhysics(false);
+			Elem.StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+}
+
 FName ASPHashGridActor::GetAreaHashID(const FVector& InLocation) const
 {
 	FIntPoint Div = GetAreaHashIDIntPoint(InLocation);
@@ -248,68 +320,6 @@ TSet<FName> ASPHashGridActor::GetNeighbourAreaHashIDList(FName InCenterHash) con
 	}
 	
 	return NeighbourList;
-}
-
-void ASPHashGridActor::UpdateAreaStaticMeshComponents(const FName& InAreaID, const bool bCollisionEnable)
-{
-	if (StaticMeshHashData.Contains(InAreaID) == false)
-	{
-		return;
-	}
-
-	TArray<FSpatialElement>& Elements = StaticMeshHashData[InAreaID].StaticMeshHashData;
-
-	for (FSpatialElement& Elem : Elements)
-	{
-		if (bCollisionEnable)
-		{
-			Elem.StaticMeshComponent->SetCollisionEnabled(Elem.CollisionEnabledType);
-			Elem.StaticMeshComponent->SetSimulatePhysics(Elem.bSimulatePhysics);
-		}
-		else
-		{
-			Elem.StaticMeshComponent->SetSimulatePhysics(false);
-			Elem.StaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		}
-	}
-}
-
-void ASPHashGridActor::DrawDebugObjects()
-{
-	for (const TPair<FName,FSpatialData>& Pair : StaticMeshHashData)
-	{
-		for (const FSpatialElement& Elem : Pair.Value.StaticMeshHashData)
-		{
-			const bool bCollisionEnabled = Elem.StaticMeshComponent->IsCollisionEnabled();
-			const FBox Box = Elem.StaticMeshComponent->Bounds.GetBox();
-			DrawDebugBox(GetWorld(), Box.GetCenter(), Box.GetExtent(), (bCollisionEnabled) ? FColor::Blue : FColor::Red,false,DebugShowInterval);
-		}
-	}
-
-	//Grids
-	for (int32 x = 0 ; x < GridCountX ; ++x)
-	{
-		for (int32 y = 0; y < GridCountY; ++y)
-		{
-			const FVector GridCenter = FVector(x * GridWidth + GridWidth / 2.f, y * GridHeight + GridHeight / 2.f, 0);
-			const FVector GridExtent = FVector(GridWidth / 2.f,GridHeight / 2.f, 100.f);
-			DrawDebugBox(GetWorld(), GridCenter, GridExtent, FColor::Green, false, DebugShowInterval);
-		}
-	}
-}
-
-void ASPHashGridActor::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-	if (bDebug)
-	{
-		DebugShowTimer += DeltaTime;
-		if (DebugShowTimer > DebugShowInterval)
-		{
-			DrawDebugObjects();
-			DebugShowTimer = 0;
-		}
-	}
 }
 
 void ASPHashGridActor::RegisterDynamicActors(AActor* InActor)

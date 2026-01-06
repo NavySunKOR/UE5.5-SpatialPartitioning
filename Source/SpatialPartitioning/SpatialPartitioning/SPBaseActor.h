@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "SPBaseActor.generated.h"
 
+#define EXCLUDE_FROM_SPATIAL_PARTITIONING FName("ExcludeSP")
+
 UCLASS(Abstract)
 class SPATIALPARTITIONING_API ASPBaseActor : public AActor
 {
@@ -18,9 +20,12 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	virtual void InitProperties() PURE_VIRTUAL(ASPBaseActor::InitProperties, );
+
 	//Removed SkeletalMeshes because they can move.
 	virtual void InitStaticMeshComponents() PURE_VIRTUAL(ASPBaseActor::InitStaticMeshComponents,);
 	virtual void UpdatePartitioningState() PURE_VIRTUAL(ASPBaseActor::UpdatePartitioningState, );
+	virtual void DrawDebugObjects() PURE_VIRTUAL(ASPBaseActor::DrawDebugObjects, );
 
 public:	
 	// Called every frame
@@ -31,25 +36,24 @@ protected:
 	UFUNCTION(CallInEditor)
 	void SetBoundsAlignActor();
 #endif
-
-	void InitGridData();
 protected:
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<AActor> BoundSetActor;
 #endif
-
-	UPROPERTY(EditAnywhere)
-	int32 GridCountX;
-
-	UPROPERTY(EditAnywhere)
-	int32 GridCountY;
-
 	UPROPERTY(EditAnywhere)
 	FVector Center;
 
 	UPROPERTY(EditAnywhere)
 	FVector Extent;
+
+	UPROPERTY(EditAnywhere)
+	bool bDebug = true;
+
+	UPROPERTY(EditAnywhere)
+	float DebugShowInterval = 1.f;
+
+	float DebugShowTimer = 0.f;
 
 	FVector StartPos; //LeftTop
 	uint32 GridWidth;

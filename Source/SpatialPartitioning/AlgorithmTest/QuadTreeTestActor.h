@@ -6,10 +6,6 @@
 #include "BaseAlgorithmTestActor.h"
 #include "QuadTreeTestActor.generated.h"
 
-
-
-#define DEFAULT_CAPACITY_PER_NODE 10
-
 struct QuadTreeNodeElement
 {
 public:

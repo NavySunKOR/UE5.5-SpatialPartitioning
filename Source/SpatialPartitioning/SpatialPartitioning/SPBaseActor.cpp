@@ -11,8 +11,6 @@ ASPBaseActor::ASPBaseActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	GridCountX = 5;
-	GridCountY = 5;
 
 }
 
@@ -21,7 +19,7 @@ void ASPBaseActor::BeginPlay()
 {
 	Super::BeginPlay();
 	PlayerChar = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	InitGridData();
+	InitProperties();
 	InitStaticMeshComponents();
 }
 
@@ -30,6 +28,16 @@ void ASPBaseActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	UpdatePartitioningState();
+
+	if (bDebug)
+	{
+		DebugShowTimer += DeltaTime;
+		if (DebugShowTimer > DebugShowInterval)
+		{
+			DrawDebugObjects();
+			DebugShowTimer = 0;
+		}
+	}
 }
 
 void ASPBaseActor::SetBoundsAlignActor()
@@ -42,16 +50,4 @@ void ASPBaseActor::SetBoundsAlignActor()
 	// Expand bounds for the BoundsAlignActor and all primitive components that write to this virtual texture.
 	FBox Bounds;
 	BoundSetActor->GetActorBounds(false,Center,Extent);
-}
-
-void ASPBaseActor::InitGridData()
-{
-	StartPos = Center;
-	StartPos.X -= Extent.X;
-	StartPos.Y -= Extent.Y;
-
-	const FVector FullExtent = Extent * 2.f;
-
-	GridWidth = uint32(FullExtent.X / GridCountX);
-	GridHeight = uint32(FullExtent.Y / GridCountY);
 }
